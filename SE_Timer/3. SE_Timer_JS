@@ -3,53 +3,99 @@ var currentTime = 0;
 var isRunning = false;
 var cleared = false;
 var isPaused = false;
-
+var timeAdded = 0;
+var maxReached = false
 var eventQueue = [];
  $("#event").fadeOut(500); 
+
 displayEvent()
-
-window.addEventListener('onWidgetLoad', function (obj) {
-    fieldData = obj['detail']['fieldData'];
-    channelName = obj['detail']['channel']['username'];
-});
-
+if({{alwaysShow}}){
+  $("#cdtimer").fadeTo(0,500); 
+  display = document.querySelector('#cdtimer');
+     display.textContent = "00:00"
+}
 window.addEventListener('onEventReceived', function (obj) {
+	
 	let data = obj.detail.event.data;
   	const event = obj.detail.event;
   	console.log("Event")
   	console.log(obj.detail.event)
-  	if(!checkPrivileges(data)) {
-      return true;
-    }
   
 	//if (obj.detail.listener !== "message") return;
   	//if (data["displayName"] == "StreamElements"	) return;
 	
+  
+  
+   
+
+	
+  
   	if(event.type == "follower" && {{followerEnabled}} && {{followerIncrease}} != null ){
       console.log("Following12")
       eventIncreaseTime( {{followerIncrease}} )
-      eventQueue.push(event.name + " added {{followerIncrease}} seconds by following.")
-      
-    }else if(event.type == "subscriber" && {{subEnabled}} && {{subIncrease}} != null ){
-        console.log("Subscribing12")
-      	
-      if(event.hasOwnProperty("gifted") && event.gifted){
-          	eventIncreaseTime( {{subIncrease}} )
-      		eventQueue.push(event.sender + " added {{subIncrease}} seconds by gifting a sub to " +event.name+ ".")
+      if(!maxReached)
+      	eventQueue.push(event.name + " added {{followerIncrease}} seconds by following.")
+      else
+      	eventQueue.push(event.name + " followed but cap was reached.")
+        
+    }else if(event.type == "subscriber" && {{subEnabled}} && ({{subT1Increase}} != null || {{subT2Increase}} != null ||{{subT3Increase}} != null  ) ){
+     	console.log("Subscribing12")
+      	console.log(event)
+      	if(event.hasOwnProperty("gifted") && event.gifted){
+          console.log("Gifted")
+        	if(event.tier=="prime" || event.tier=="1000"){
+              	eventIncreaseTime( {{subT1Increase}} )
+              	if(!maxReached)
+      				eventQueue.push(event.name + " added {{subT1Increase}} seconds by gifting a tier 1 sub to " +event.name+ ".")
+      		  	else
+      				eventQueue.push(event.name + " gifting a tier 1 sub to " +event.name+ " but the cap was reached.")
+            }else if(event.tier=="2000"){
+              eventIncreaseTime( {{subT2Increase}} )
+              	if(!maxReached)
+      				eventQueue.push(event.name + " added {{subT21Increase}} seconds by gifting a tier 2 sub to " +event.name+ ".")
+      		  	else
+      				eventQueue.push(event.name + " gifting a tier 2 sub to " +event.name+ " but the cap was reached.")
+            }else if(event.tier=="3000"){
+              eventIncreaseTime( {{subT3Increase}} )
+              	if(!maxReached)
+      				eventQueue.push(event.name + " added {{subT3Increase}} seconds by gifting a tier 3 sub to " +event.name+ ".")
+      		  	else
+      				eventQueue.push(event.name + " gifting a tier 3 sub to " +event.name+ " but the cap was reached.")
+            }
         }else{
-          if(event.hasOwnProperty("data")){
-           	return 
-          }
-          if(event.hasOwnProperty("bulkGifted")){
-           		if(event.bulkGifted){
+          	console.log("Normal")
+          	if(event.hasOwnProperty("data")){
+           		return 
+          	}
+          	console.log(event.bulkGifted)
+         	if(event.hasOwnProperty("bulkGifted")){
+        		if(event.bulkGifted){
          			return 
         		}
-       	 	}
-            
-          	eventIncreaseTime( {{subIncrease}} )
-      		eventQueue.push(event.name + " added {{subIncrease}} seconds by subscribing.")
+            }
+          	console.log("Normal")
+            	if(event.tier=="prime" || event.tier=="1000"){
+              		eventIncreaseTime( {{subT1Increase}} )
+                  if(!maxReached)
+                      eventQueue.push(event.name + " added {{subT1Increase}} seconds by subscribing.")
+                  else
+      				eventQueue.push(event.name + " subscribed but the cap was reached.")
+            	}else if(event.tier=="2000"){
+              		eventIncreaseTime( {{subT2Increase}} )
+                   if(!maxReached)
+                      eventQueue.push(event.name + " added {{subT2Increase}} seconds by subscribing.")
+                  else
+      				eventQueue.push(event.name + " subscribed (Tier 2) but the cap was reached.")
+           	}else if(event.tier=="3000"){
+              		eventIncreaseTime( {{subT3Increase}} )
+                   if(!maxReached)
+                      eventQueue.push(event.name + " added {{subT3Increase}} seconds by subscribing.")
+                  else
+      				eventQueue.push(event.name + " subscribed (Tier 3) but the cap was reached.")
+          	}
+       	 	
         }
-     
+      
     }else if(event.type == "cheer" && {{cheerEnabled}} && {{cheerIncrease}} != null ){
             console.log("Cheering123")
 		if(event.amount == null){
@@ -58,7 +104,10 @@ window.addEventListener('onEventReceived', function (obj) {
       let amount = {{cheerIncrease}} * event.amount;
       eventIncreaseTime( amount )
   		console.log(amount)
-      eventQueue.push(event.name + " added " + amount + " seconds by cheering.")
+ 		if(!maxReached)
+        	eventQueue.push(event.name + " added " + amount + " seconds by cheering.")
+    	else
+      		eventQueue.push(event.name + " cheered but the cap was reached.")
       
     }else if(event.type == "tip" && {{tipEnabled}} && {{tipIncrease}} != null ){
         console.log("Tipping123")
@@ -67,7 +116,10 @@ window.addEventListener('onEventReceived', function (obj) {
         }
   	 	let amount = {{tipIncrease}} * Math.floor(event.amount);
       	eventIncreaseTime( amount )
-      	eventQueue.push(event.name + " added " + amount + " seconds by tipping.")
+ 		if(!maxReached)
+        	eventQueue.push(event.name + " added " + amount + " seconds by tipping.")
+    	else
+      		eventQueue.push(event.name + " tipped but the cap was reached.")
     }else if(obj.detail.listener == "message"){
       	console.log("This is a message")
       	var badge1,badge2,badge3 = '';
@@ -103,7 +155,8 @@ window.addEventListener('onEventReceived', function (obj) {
                 		if({{playSoundStart}} && !isRunning){
                 			playAudio('{{soundFileStart}}','{{soundVolumeStart}}');
                     	}
-               	 		currentTime = 0; 
+                      
+                		cleared = false;
                 		const {hours, minutes, seconds} = parseTime(time);
                 		currentTime  =  hours+minutes+seconds;
                     	if(!isRunning){
@@ -166,17 +219,30 @@ function start(){
       	if({{playSound}} && !cleared){
       		playAudio('{{soundFile}}','{{soundVolume}}');
 		}
-      	setTimeout(() => {  
-          	animateCSS('#cdtimer', "bounceOut");
-			animateCSS('#cdtimer', "slow");
-      		$("#cdtimer").fadeTo(500,0); 
-        }, 2000);
+      	if(!{{alwaysShow}}){
+          setTimeout(() => {  
+              animateCSS('#cdtimer', "bounceOut");
+              animateCSS('#cdtimer', "slow");
+              $("#cdtimer").fadeTo(500,0); 
+          }, 2000);
+        }
      	isRunning = false;
       	cleared = false;
     }
 }
 
 function eventIncreaseTime(time){
+  console.log("EventIncreseTime")
+  console.log({{cappedTime}})
+  	if({{cappedTime}}!=null && {{cappedTime}}!=-1){
+      	if({{cappedTime}} <= timeAdded){
+          maxReached = true
+          return
+        }
+     	timeAdded = timeAdded + time/60; 
+      	console.log(timeAdded)
+      	
+    }
   	if(currentTime == null) 
       	currentTime = 0;
   	currentTime  = currentTime + time;
@@ -243,21 +309,3 @@ function playAudio(sound, volume){
 		audio.volume = volume * .01;
 		audio.play();
 	}
-
-let checkPrivileges = (data) => {
-    let required=fieldData.privileges;
-    let userState = {
-        'mod': parseInt(data.tags.mod),
-        'sub': parseInt(data.tags.subscriber),
-        'vip': (data.tags.badges.indexOf("vip") !== -1),
-        'badges': {
-            'broadcaster': (data.userId === data.tags['room-id']),
-        }
-    };
-    if (userState.badges.broadcaster) return true;
-    else if (required === "mods" && userState.mod) return true;
-    else if (required === "vips" && (userState.mod || userState.vip)) return true;
-    else if (required === "subs" && (userState.mod || userState.vip || userState.sub)) return true;
-    else if (required === "everybody") return true;
-    else return false;
-};

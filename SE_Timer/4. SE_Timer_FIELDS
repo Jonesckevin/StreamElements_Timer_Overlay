@@ -1,23 +1,28 @@
 {
-  "chatCommand": {
-    "type": "text",
-    "label": "Chat Command",
-    "value": "!timer",
-    "group":"Command"
-  },
-  "privileges": {
+  
+"chatCommand": {
+  "type": "text",
+  "label": "Chat Command",
+  "value": "!timer",
+  "group":"Command"
+},
+  "cappedTime": {
+  "type": "text",
+  "label": "Max Time allowed to be added in Minutes. -1 for no cap.",
+  "value": "-1",
+  "group":"Command"
+},
+  "alwaysShow": {
     "type": "dropdown",
-    "label": "Who can participate:",
-    "value": "everybody",
+    "label": "Always show timer",
+    "value": "false",
     "options": {
-      "everybody": "Everybody",
-      "subs": "Subs",
-      "vips": "VIPS",
-      "mods": "Mods",
-      "broadcaster":"Broadcaster"
-    }
+      "true": "Yes",
+      "false": "No"
+    },
+    "group":"Command"  
   },
-  "mainTextColor": {
+"mainTextColor": {
     "type": "colorpicker",
     "label": "Text Color",
     "value": "#fdb336",
@@ -157,9 +162,21 @@
     },
     "group":"Subs"  
   },
-	"subIncrease": {
+	"subT1Increase": {
     "type": "number",
-    "label": "Increase by Seconds per sub",
+    "label": "Increase by Seconds per Tier 1 Sub",
+    "value": 30,
+    "group":"Subs"  
+  },
+	"subT2Increase": {
+    "type": "number",
+    "label": "Increase by Seconds per Tier 2 Sub",
+    "value": 30,
+    "group":"Subs"  
+  },
+	"subT3Increase": {
+    "type": "number",
+    "label": "Increase by Seconds per Tier 3 Sub",
     "value": 30,
     "group":"Subs"  
   },
